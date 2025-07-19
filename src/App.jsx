@@ -1,11 +1,13 @@
-import './App.css'
+import './App.css';
+import Providers from './providers/Providers';
+import Router from './shared/Router';
 
 function App() {
   return (
-    <>
-      <p>start</p>
-    </>
-  )
+    <Providers>
+      <Router />
+    </Providers>
+  );
 }
 
-export default App
+export default App;

@@ -1,7 +1,7 @@
 import React from 'react';
 
-function Providers() {
-  return <div>Providers</div>;
+function Providers({ children }) {
+  return <div>{children}</div>;
 }
 
 export default Providers;
