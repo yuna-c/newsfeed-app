@@ -1,7 +1,3 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-
-import ProtectedRoute from './ProtectedRoute';
-
 import Home from '../pages/Home';
 import MyPage from '../pages/MyPage';
 import SignIn from '../pages/auth/SignIn';
@@ -10,20 +6,37 @@ import EditPost from '../pages/post/EditPost';
 import WritePost from '../pages/post/WritePost';
 import DetailPost from '../pages/post/DetailPost';
 import Layout from '../components/layouts/Layout';
+import PublicRoute from './PublicRoute';
+import ProtectedRoute from './ProtectedRoute';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 
 const Router = () => {
   // ✅ 1. 누구나 접근 가능한 라우트
   const publicRoutes = [
     { path: '/', element: <Home /> },
     { path: '/detailpost/:id', element: <DetailPost /> },
-    { path: '/signin', element: <SignIn /> },
-    { path: '/signup', element: <SignUp /> }
+    {
+      path: '/signin',
+      element: (
+        <PublicRoute>
+          <SignIn />
+        </PublicRoute>
+      )
+    },
+    {
+      path: '/signup',
+      element: (
+        <PublicRoute>
+          <SignUp />
+        </PublicRoute>
+      )
+    }
   ];
 
   // ✅ 2. 로그인한 사용자만 접근 가능한 라우트
-  const privateRoutes = [
+  const protectedRoutes = [
     {
-      path: '/user',
+      path: '/',
       element: <ProtectedRoute />,
       children: [
         { path: 'mypage', element: <MyPage /> },
@@ -44,7 +57,7 @@ const Router = () => {
     {
       path: '/',
       element: <Layout />,
-      children: [...publicRoutes, ...privateRoutes, notFound]
+      children: [...publicRoutes, ...protectedRoutes, notFound]
     }
   ]);
 
