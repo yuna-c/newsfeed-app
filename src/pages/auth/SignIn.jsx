@@ -1,8 +1,64 @@
-import { Link } from 'react-router-dom';
+import { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 
 function SignIn() {
-  const onChange = (e) => {};
-  const onSubmit = async (e) => {};
+  const navigate = useNavigate();
+  const { signIn } = useContext(AuthContext);
+
+  const [errors, setErrors] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email) {
+      newErrors.email = '이메일을 입력하세요.';
+    }
+
+    if (!formData.password) {
+      newErrors.password = '비밀번호를 입력하세요.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+
+    if (validateForm()) {
+      try {
+        const { data, error } = await signIn({
+          email: formData.email,
+          password: formData.password
+        });
+
+        if (error) {
+          setErrors({ email: '이메일 또는 비밀번호가 잘못되었습니다.' });
+          console.error('로그인 오류:', error);
+          return;
+        }
+
+        alert('✅ 로그인 완료');
+        navigate('/');
+      } catch (error) {
+        console.error('로그인 오류:', error);
+      }
+    }
+  };
+
   return (
     <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
       <article className="w-full space-y-6 xl:w-1/3">
@@ -18,11 +74,15 @@ function SignIn() {
               type="email"
               id="email"
               name="email"
+              value={formData.email}
               placeholder="이메일"
               onChange={onChange}
-              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isSubmitted && errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
               autoFocus
             />
+            {isSubmitted && errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
           </fieldset>
 
           <fieldset className="flex flex-col">
@@ -34,10 +94,14 @@ function SignIn() {
               type="password"
               id="password"
               name="password"
+              value={formData.password}
               placeholder="비밀번호"
               onChange={onChange}
-              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isSubmitted && errors.password ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {isSubmitted && errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
           </fieldset>
 
           <div className="checkbox">
@@ -46,7 +110,7 @@ function SignIn() {
                 type="checkbox"
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded cursor-pointer checked:border-transparent focus:outline-none accent-gray-950"
               />
-              <span className="text-sm text-gray-700">Remember me</span>
+              <span className="text-sm text-gray-700">아이디/ 비밀번호 기억하기</span>
             </label>
           </div>
 
