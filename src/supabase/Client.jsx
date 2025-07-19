@@ -1,7 +1,6 @@
-import React from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-function Client() {
-  return <div>Client</div>
-}
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-export default Client
+export const supabase = createClient(supabaseUrl, supabaseKey)
