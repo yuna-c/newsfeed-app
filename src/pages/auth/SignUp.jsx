@@ -2,9 +2,16 @@ import { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 
+const NAME_REGEX = /^[가-힣a-zA-Z]{2,20}$/;
+const EMAIL_REGEX = /\S+@\S+\.\S+/;
+const NICKNAME_REGEX = /^[가-힣a-zA-Z0-9_]{2,15}$/;
+
 function SignUp() {
   const navigate = useNavigate();
   const { signUp } = useContext(AuthContext);
+
+  const [errors, setErrors] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -15,6 +22,34 @@ function SignUp() {
     avatarUrl: null
   });
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!NAME_REGEX.test(formData.username)) {
+      newErrors.username = '이름은 2~20자의 한글 또는 영문자여야 합니다.';
+    }
+
+    if (!NICKNAME_REGEX.test(formData.nickname)) {
+      newErrors.nickname = '닉네임은 2~15자의 한글, 영문자, 숫자, _만 허용됩니다.';
+    }
+
+    if (!EMAIL_REGEX.test(formData.email)) {
+      newErrors.email = '유효한 이메일을 입력하세요.';
+    }
+
+    if (formData.password.length < 4) {
+      newErrors.password = '비밀번호는 최소 4자 이상이어야 합니다.';
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
   const onChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -22,32 +57,32 @@ function SignUp() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitted(true);
 
-    try {
-      const { data, error } = await signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            user_name: formData.username,
-            nick_name: formData.nickname,
-            avatar_url: formData.avatarUrl
+    if (validateForm()) {
+      try {
+        const { _data, error } = await signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              user_name: formData.username,
+              nick_name: formData.nickname,
+              avatar_url: formData.avatarUrl
+            }
           }
+        });
+
+        if (error) {
+          setErrors({ email: '회원가입 오류: ' + error.message });
+          return;
         }
-      });
 
-      if (error) {
-        setErrors({ email: '회원가입 오류: ' + error.message });
-        console.error('🚨 회원가입 오류:', error);
-        console.log(error);
-        return;
+        alert('✅ 회원가입 완료');
+        navigate('/signin');
+      } catch (err) {
+        console.error('🚨 회원가입 오류:', err.message);
       }
-
-      alert('회원가입 완료!');
-      console.log('회원가입 성공', data);
-      navigate('/signin');
-    } catch (err) {
-      console.error('🚨 회원가입 오류:', err.message);
     }
   };
 
@@ -69,8 +104,12 @@ function SignUp() {
               value={formData.username}
               placeholder="이름"
               onChange={onChange}
-              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isSubmitted && errors.username ? 'border-red-500' : 'border-gray-300'
+              }`}
+              autoFocus
             />
+            {isSubmitted && errors.username && <p className="mt-1 text-sm text-red-500">{errors.username}</p>}
           </fieldset>
 
           <fieldset className="flex flex-col">
@@ -84,8 +123,11 @@ function SignUp() {
               value={formData.nickname}
               placeholder="닉네임"
               onChange={onChange}
-              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent `}
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isSubmitted && errors.nickname ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {isSubmitted && errors.nickname && <p className="mt-1 text-sm text-red-500">{errors.nickname}</p>}
           </fieldset>
 
           <fieldset className="flex flex-col">
@@ -100,9 +142,11 @@ function SignUp() {
               value={formData.email}
               placeholder="이메일"
               onChange={onChange}
-              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent `}
-              autoFocus
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isSubmitted && errors.email ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {isSubmitted && errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
           </fieldset>
 
           <fieldset className="flex flex-col">
@@ -117,8 +161,11 @@ function SignUp() {
               value={formData.password}
               placeholder="비밀번호"
               onChange={onChange}
-              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent `}
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isSubmitted && errors.password ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {isSubmitted && errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
           </fieldset>
 
           <fieldset className="flex flex-col">
@@ -133,8 +180,13 @@ function SignUp() {
               value={formData.confirmPassword}
               placeholder="비밀번호 확인"
               onChange={onChange}
-              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent `}
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                isSubmitted && errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+              }`}
             />
+            {isSubmitted && errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+            )}
           </fieldset>
 
           <div className="flex w-full gap-2">
@@ -142,14 +194,14 @@ function SignUp() {
               type="submit"
               className="inline-flex justify-center w-1/2 px-4 py-2 font-semibold text-white rounded-md text-sm/6 bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950"
             >
-              Sign up
+              회원가입 하기
             </button>
 
             <Link
               to="/signin"
               className="inline-flex justify-center w-1/2 px-4 py-2 font-semibold text-white rounded-md text-sm/6 bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950/"
             >
-              Sign in
+              로그인 하기
             </Link>
           </div>
         </form>
