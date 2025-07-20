@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 
 function SignIn() {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ function SignIn() {
 
     if (validateForm()) {
       try {
-        const { data, error } = await signIn({
+        const { _data, error } = await signIn({
           email: formData.email,
           password: formData.password
         });
@@ -58,8 +59,8 @@ function SignIn() {
           console.error('로그인 오류:', error);
           return;
         }
-
-        alert('✅ 로그인 완료');
+        // toast 알람 처리
+        toast.success('로그인 완료');
         navigate('/');
       } catch (error) {
         console.error('로그인 오류:', error);

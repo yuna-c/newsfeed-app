@@ -1,6 +1,7 @@
 import { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const NAME_REGEX = /^[가-힣a-zA-Z]{2,20}$/;
 const EMAIL_REGEX = /\S+@\S+\.\S+/;
@@ -78,8 +79,9 @@ function SignUp() {
           return;
         }
 
-        alert('✅ 회원가입 완료');
-        navigate('/signin');
+        toast.success('회원가입 완료');
+        // 회원가입 성공 후 navigate()로 전달된 추가 state 데이터 { fromSignUp: true } 전달
+        navigate('/signin', { state: { fromSignUp: true } });
       } catch (err) {
         console.error('🚨 회원가입 오류:', err.message);
       }
