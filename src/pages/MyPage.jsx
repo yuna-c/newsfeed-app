@@ -7,7 +7,10 @@ import Modal from '../components/common/Modal';
 
 function MyPage() {
   const { user } = useContext(AuthContext);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState({
     id: '',
     email: '',
@@ -37,6 +40,23 @@ function MyPage() {
     setPasswords((prev) => ({ ...prev, [name]: value }));
   };
 
+  // 유효성 검사
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (passwords.password.length < 6) {
+      newErrors.password = '비밀번호는 최소 6자 이상이어야 합니다.';
+    }
+
+    if (passwords.password !== passwords.confirmPassword) {
+      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+    }
+
+    setErrors(newErrors);
+
+    return Object.keys(newErrors).length === 0;
+  };
+
   // 마이페이지 유저 정보 가져오기
   const fetchUserData = async () => {
     if (!user?.id) return;
@@ -59,42 +79,52 @@ function MyPage() {
   // 수정 정보 반영
   const onSubmit = async (e) => {
     e.preventDefault();
+    // 에러 메시지를 화면에 표시하기 위한 플래그
+    setIsSubmitted(true);
 
-    if (passwords.password !== passwords.confirmPassword) {
-      toast.error('비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    try {
-      // upsert : 있으면 수정, 없으면 삽입
-      const { _data, error: profileError } = await supabase.from('profiles').upsert({
-        // email,
-        id: user.id,
-        nick_name: formData.nick_name,
-        website_url: formData.website_url,
-        updated_at: new Date().toISOString()
-      });
-
-      if (profileError) {
-        alert('프로필 업데이트 실패');
-        return;
-      }
-
-      // updateUser : 비밀번호 업데이트
-      if (passwords.password) {
-        const { _data, error: passwordError } = await supabase.auth.updateUser({
-          password: passwords.password
+    // 유효성 검사 통과 시에만 요청 진행
+    if (validateForm()) {
+      try {
+        // Supabase upsert: 기존 유저 정보가 있으면 업데이트, 없으면 삽입
+        const { _data, error: profileError } = await supabase.from('profiles').upsert({
+          // email,
+          id: user.id,
+          nick_name: formData.nick_name,
+          website_url: formData.website_url,
+          updated_at: new Date().toISOString()
         });
 
-        if (passwordError) throw passwordError;
-      }
-      await fetchUserData();
-      setIsModalOpen(false);
-      toast.success('수정이 완료되었습니다.');
-    } catch (err) {
-      console.error('수정 중 오류 발생:', err.message);
-      toast.error(`비밀번호 수정 중 오류가 발생하였습니다. 
+        if (profileError) {
+          alert('프로필 업데이트 실패');
+          return;
+        }
+
+        // 비밀번호가 입력된 경우에만 비밀번호 업데이트 요청
+        if (passwords.password) {
+          const { _data, error: passwordError } = await supabase.auth.updateUser({
+            password: passwords.password
+          });
+
+          if (passwordError) {
+            // ❗️비밀번호 변경 중 오류 발생 시, 해당 메시지를 errors.password에 저장해 사용자에게 표시
+            setErrors((prev) => ({
+              ...prev,
+              password: '비밀번호 변경 실패: ' + passwordError.message
+            }));
+            return;
+          }
+        }
+
+        // 변경된 정보 다시 불러오기
+        await fetchUserData();
+
+        setIsModalOpen(false);
+        toast.success('수정이 완료되었습니다.');
+      } catch (err) {
+        console.error('수정 중 오류 발생:', err.message);
+        toast.error(`비밀번호 수정 중 오류가 발생하였습니다. 
         ${err.message}`);
+      }
     }
   };
 
@@ -136,27 +166,27 @@ function MyPage() {
               )}
             </li>
             <li>
-              <p className="flex flex-col text-sm font-semibold text-gray-600">
+              <p className="flex flex-col text-sm font-semibold text-gray-500">
                 <span className="mb-1 font-medium">이름</span>
-                <span className="text-lg text-gray-700"> {formData.user_name}</span>
+                <span className="text-gray-700 text-medium"> {formData.user_name}</span>
               </p>
             </li>
             <li>
-              <p className="flex flex-col text-sm font-semibold text-gray-600">
+              <p className="flex flex-col text-sm font-semibold text-gray-500">
                 <span className="mb-1 font-medium">닉네임</span>
-                <span className="text-lg text-gray-700"> {formData.nick_name}</span>
+                <span className="text-gray-700 text-medium"> {formData.nick_name}</span>
               </p>
             </li>
             <li>
-              <p className="flex flex-col text-sm font-semibold text-gray-600">
+              <p className="flex flex-col text-sm font-semibold text-gray-500">
                 <span className="mb-1 font-medium">이메일</span>
-                <span className="text-lg text-gray-700"> {formData.email}</span>
+                <span className="text-gray-700 text-medium"> {formData.email}</span>
               </p>
             </li>
             <li>
-              <p className="flex flex-col text-sm font-semibold text-gray-600">
+              <p className="flex flex-col text-sm font-semibold text-gray-500">
                 <span className="mb-1 font-medium">포트폴리오</span>
-                <Link to={formData.website_url} className="text-lg text-gray-700">
+                <Link to={formData.website_url} className="text-gray-700 text-medium">
                   {formData.website_url}
                 </Link>
               </p>
@@ -175,7 +205,7 @@ function MyPage() {
       </section>
 
       {/* 모달 */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="w-full">
         <article className="space-y-6">
           <h2 className="py-6 text-3xl font-extrabold">프로필 수정</h2>
 
@@ -217,8 +247,11 @@ function MyPage() {
                 name="password"
                 value={passwords.password}
                 onChange={onChangePassword}
-                className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  isSubmitted && errors.password ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
+              {isSubmitted && errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
             </fieldset>
             <fieldset className="flex flex-col pb-2">
               <label htmlFor="confirmPassword" className="mb-1 text-sm font-medium text-gray-700">
@@ -230,8 +263,13 @@ function MyPage() {
                 name="confirmPassword"
                 value={passwords.confirmPassword}
                 onChange={onChangePassword}
-                className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  isSubmitted && errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                }`}
               />
+              {isSubmitted && errors.confirmPassword && (
+                <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+              )}
             </fieldset>
 
             <div className="flex w-full gap-2">
