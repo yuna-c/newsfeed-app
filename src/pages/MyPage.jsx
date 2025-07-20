@@ -145,7 +145,8 @@ function MyPage() {
 
     try {
       // 업로드 후 public URL 받아오기
-      const avatarUrl = await getImageURL(file, 'avatars', user.id);
+      // const avatarUrl = await getImageURL(file, 'avatars', user.id);
+      const avatarUrl = await getImageURL(file, 'avatars', user.id, formData.avatar_url, user.id);
 
       if (avatarUrl) {
         // UI에 즉시 반영
