@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
           return;
         } else {
           const userData = { ...profiles, id, email, created_at };
-          console.log('✅ [getProfiles] 프로필 로드 완료:', userData);
+          // console.log('✅ [getProfiles] 프로필 로드 완료:', userData);
           setUser(userData);
         }
       } catch (err) {
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     getProfiles(user);
-    console.log(user);
+    // console.log(user);
 
     // session : 로그인/로그아웃 세션 가져오기
     const getSession = async () => {
