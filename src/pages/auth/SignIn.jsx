@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 
@@ -8,6 +8,7 @@ function SignIn() {
 
   const [errors, setErrors] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [savedEmail, setSavedEmail] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -38,6 +39,13 @@ function SignIn() {
     e.preventDefault();
     setIsSubmitted(true);
 
+    // 이메일 로컬스토리지 기억하기
+    if (savedEmail) {
+      localStorage.setItem('savedEmail', formData.email);
+    } else {
+      localStorage.removeItem('savedEmail');
+    }
+
     if (validateForm()) {
       try {
         const { data, error } = await signIn({
@@ -58,6 +66,21 @@ function SignIn() {
       }
     }
   };
+
+  // 이메일 로컬스토리지 기억하기
+  const onSaved = () => {
+    setSavedEmail(!savedEmail);
+  };
+
+  // 이메일 로컬스토리지 기억하기 : 컴포넌트 마운트 후 저장된 값을 읽어오게 하려고
+  useEffect(() => {
+    const saved = localStorage.getItem('savedEmail');
+
+    if (saved) {
+      setFormData((prev) => ({ ...prev, email: saved }));
+      setSavedEmail(true);
+    }
+  }, []);
 
   return (
     <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -108,9 +131,11 @@ function SignIn() {
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
+                checked={savedEmail}
+                onChange={onSaved}
                 className="w-4 h-4 text-blue-600 border-gray-300 rounded cursor-pointer checked:border-transparent focus:outline-none accent-gray-950"
               />
-              <span className="text-sm text-gray-700">아이디/ 비밀번호 기억하기</span>
+              <span className="text-sm text-gray-700">아이디 기억하기</span>
             </label>
           </div>
 
