@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { supabase } from '../../supabase/Client';
 
 function SignIn() {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ function SignIn() {
 
     if (validateForm()) {
       try {
-        const { _data, error } = await signIn({
+        const { data, error } = await signIn({
           email: formData.email,
           password: formData.password
         });
@@ -59,8 +60,26 @@ function SignIn() {
           console.error('로그인 오류:', error);
           return;
         }
+
+        // 회원 탈퇴
+        const signedInUser = data.user;
+
+        if (signedInUser) {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', signedInUser.id)
+            .maybeSingle();
+
+          if (!profileData || profileError) {
+            await supabase.auth.signOut();
+            toast.error('회원 가입 후 사용해 주세요.');
+            return;
+          }
+        }
+
         // toast 알람 처리
-        toast.success('로그인 완료');
+        toast.success('로그인되었습니다.');
         navigate('/');
       } catch (error) {
         console.error('로그인 오류:', error);

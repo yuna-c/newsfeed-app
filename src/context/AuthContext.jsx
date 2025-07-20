@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
           return;
         } else if (!profiles) {
-          console.warm('⚠️ [getProfiles] 프로필 데이터 없음 (로그인 전 상태)');
+          console.warn('⚠️ [getProfiles] 프로필 데이터 없음 (로그인 전 상태)');
           setUser(null);
           return;
         } else {
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
         }
         setLoading(false);
       } catch (err) {
-        console.error('🔥 [getSession] 예외 발생:', err.message);
+        console.warn('🔥 [getSession] 예외 발생:', err.message);
         setUser(null);
       } finally {
         setLoading(false);
