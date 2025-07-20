@@ -38,8 +38,8 @@ function SignUp() {
       newErrors.email = '유효한 이메일을 입력하세요.';
     }
 
-    if (formData.password.length < 4) {
-      newErrors.password = '비밀번호는 최소 4자 이상이어야 합니다.';
+    if (formData.password.length < 6) {
+      newErrors.password = '비밀번호는 최소 6자 이상이어야 합니다.';
     }
 
     if (formData.password !== formData.confirmPassword) {
