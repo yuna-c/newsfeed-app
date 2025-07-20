@@ -4,13 +4,15 @@ import { AuthContext } from './../context/AuthContext';
 import { useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import Modal from '../components/common/Modal';
+import { getImageURL } from '../utils/getUrls';
 
 function MyPage() {
   const { user } = useContext(AuthContext);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [upLoading, setUpLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     id: '',
     email: '',
@@ -128,6 +130,46 @@ function MyPage() {
     }
   };
 
+  // 프로필 이미지 업데이트
+  const onImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 이미지 파일인지 MIME 타입으로 확인
+    if (!file.type.startsWith('image/', 0)) {
+      toast.error('이미지 파일만 업로드 가능합니다');
+      return;
+    }
+
+    setUpLoading(true);
+
+    try {
+      // 업로드 후 public URL 받아오기
+      const avatarUrl = await getImageURL(file, 'avatars', user.id);
+
+      if (avatarUrl) {
+        // UI에 즉시 반영
+        setFormData((prev) => ({ ...prev, avatar_url: avatarUrl }));
+
+        // DB의 profiles 테이블에도 업데이트
+        const { _data, error } = await supabase
+          .from('profiles')
+          .update({
+            avatar_url: avatarUrl
+          })
+          .eq('id', user.id);
+
+        if (error) throw error;
+        toast.success('프로필 이미지가 변경 되었습니다.');
+
+        setUpLoading(false);
+      }
+    } catch (err) {
+      console.error(`이미지 업로드 오류: ${err.message}`);
+      toast.error('이미지 업로드 중 오류가 발생하였습니다.');
+    }
+  };
+
   return (
     <>
       <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
@@ -147,6 +189,7 @@ function MyPage() {
                   <input
                     type="file"
                     accept="images/*"
+                    onChange={onImageChange}
                     className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
                   />
                 </div>
@@ -160,6 +203,7 @@ function MyPage() {
                   <input
                     type="file"
                     accept="images/*"
+                    onChange={onImageChange}
                     className="absolute top-0 left-0 w-full h-full opacity-0 cursor-pointer"
                   />
                 </div>
