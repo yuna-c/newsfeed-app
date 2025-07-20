@@ -1,5 +1,21 @@
+import { useEffect } from 'react';
+
 function Modal({ isOpen, onClose, children }) {
+  
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
   return (
     <div className="fixed inset-0 z-10 flex items-center justify-center w-full h-full bg-black/50" onClick={onClose}>
       <div
