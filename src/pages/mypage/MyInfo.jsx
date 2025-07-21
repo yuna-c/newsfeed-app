@@ -46,16 +46,19 @@ function MyInfo() {
   const validateForm = () => {
     const newErrors = {};
 
-    if (passwords.password.length < 6) {
-      newErrors.password = '비밀번호는 최소 6자 이상이어야 합니다.';
-    }
+    // 비밀번호를 입력한 경우만 검사
+    if (passwords.password || passwords.confirmPassword) {
+      if (passwords.password.length < 6) {
+        newErrors.password = '비밀번호는 최소 6자 이상이어야 합니다.';
+      }
 
-    if (passwords.password !== passwords.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+      if (passwords.password !== passwords.confirmPassword) {
+        newErrors.confirmPassword = '비밀번호가 일치하지 않습니다.';
+      }
     }
 
     setErrors(newErrors);
-
+    // 객체의 key 값들을 배열로 반환(newErrors 객체에 아무 키도 없으면 = 에러가 없다)
     return Object.keys(newErrors).length === 0;
   };
 
@@ -89,7 +92,6 @@ function MyInfo() {
       try {
         // Supabase upsert: 기존 유저 정보가 있으면 업데이트, 없으면 삽입
         const { _data, error: profileError } = await supabase.from('profiles').upsert({
-          // email,
           id: user.id,
           nick_name: formData.nick_name,
           website_url: formData.website_url,
@@ -233,19 +235,19 @@ function MyInfo() {
           <li>
             <p className="flex flex-col text-sm font-semibold text-gray-500">
               <span className="mb-1 font-medium">이름</span>
-              <span className="text-gray-700 text-medium"> {formData.user_name}</span>
+              <span className="text-gray-700 text-medium">{formData.user_name}</span>
             </p>
           </li>
           <li>
             <p className="flex flex-col text-sm font-semibold text-gray-500">
               <span className="mb-1 font-medium">닉네임</span>
-              <span className="text-gray-700 text-medium"> {formData.nick_name}</span>
+              <span className="text-gray-700 text-medium">{formData.nick_name}</span>
             </p>
           </li>
           <li>
             <p className="flex flex-col text-sm font-semibold text-gray-500">
               <span className="mb-1 font-medium">이메일</span>
-              <span className="text-gray-700 text-medium"> {formData.email}</span>
+              <span className="text-gray-700 text-medium">{formData.email}</span>
             </p>
           </li>
           <li>
@@ -296,6 +298,7 @@ function MyInfo() {
                 className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
             </fieldset>
+
             <fieldset className="flex flex-col pb-2">
               <label htmlFor="website_url" className="mb-1 text-sm font-medium text-gray-700">
                 포트폴리오
@@ -309,6 +312,7 @@ function MyInfo() {
                 className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
             </fieldset>
+
             <fieldset className="flex flex-col pb-2">
               <label htmlFor="password" className="mb-1 text-sm font-medium text-gray-700">
                 비밀번호
@@ -325,6 +329,7 @@ function MyInfo() {
               />
               {isSubmitted && errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
             </fieldset>
+
             <fieldset className="flex flex-col pb-2">
               <label htmlFor="confirmPassword" className="mb-1 text-sm font-medium text-gray-700">
                 비밀번호 확인
@@ -351,6 +356,7 @@ function MyInfo() {
               >
                 확인
               </button>
+
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}

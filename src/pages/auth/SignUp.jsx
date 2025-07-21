@@ -2,10 +2,7 @@ import { useContext, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-
-const NAME_REGEX = /^[가-힣a-zA-Z]{2,20}$/;
-const EMAIL_REGEX = /\S+@\S+\.\S+/;
-const NICKNAME_REGEX = /^[가-힣a-zA-Z0-9_]{2,15}$/;
+import { EMAIL_REGEX, NAME_REGEX, NICKNAME_REGEX } from '../../components/constants/regex';
 
 function SignUp() {
   const navigate = useNavigate();
