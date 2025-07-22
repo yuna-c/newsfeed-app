@@ -1,10 +1,9 @@
 function Home() {
   return (
-    <>
-      <h1 className="text-3xl text-red-500 font-lora">Lora 제목</h1>
-      <p className="text-base font-opensans">Open Sans 내용</p>
-      <p className="text-sm font-pretendard">프리텐다드 본문</p>
-    </>
+    <div className="flex flex-col w-[1090px]">
+      <p className="text-[100px] font-extrabold mt-40">프론트엔드 기술면접 리스트</p>
+      <p className="text-[90px] font-extrabold mt-40 text-right">SEO and Accessibility </p>
+    </div>
   );
 }
 

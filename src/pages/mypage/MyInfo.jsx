@@ -198,7 +198,7 @@ function MyInfo() {
 
   return (
     <>
-      <div className="pt-8 space-y-6 md:p-12 lg:w-1/3">
+      <div className="mt-20">
         <ul className="space-y-4">
           <li className="flex justify-center pb-4">
             {formData.avatar_url ? (

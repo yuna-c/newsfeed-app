@@ -13,9 +13,9 @@ function MyPage() {
 
   return (
     <>
-      <section className="min-h-[calc(100vh-10rem)] flex justify-center">
-        <article className="md:w-[90%] w-full">
-          <h2 className="pt-10 pb-20 text-3xl font-extrabold">마이페이지</h2>
+      <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+        <article className="w-full space-y-6 xl:w-1/3">
+          <h2 className="text-3xl font-extrabold">마이페이지</h2>
 
           <div className="flex w-auto border-b md:w-80">
             {tabs.map((tab, i) => {
@@ -33,7 +33,7 @@ function MyPage() {
             })}
           </div>
 
-          <div className="flex flex-col items-center justify-center w-full p-4">
+          <div className="tab">
             {index === 0 && <MyInfo />}
             {index === 1 && <MyPost />}
             {index === 2 && <MyStatus />}
