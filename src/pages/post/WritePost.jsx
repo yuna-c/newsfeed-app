@@ -1,36 +1,45 @@
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { supabase } from '../../supabase/Client';
+import { useNavigate } from 'react-router-dom';
 
 function WritePost() {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [content, setContent] = useState('');
-  const [hashtag, setHashtag] = useState('');
-  const [projectStartDate, setProjectStartDate] = useState('');
-  const [projectEndDate, setProjectEndDate] = useState('');
-  const [images, setImages] = useState([]);
+  const [upLoading, setUpLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    content: '',
+    hashtag: '',
+    projectStartDate: '',
+    projectEndDate: '',
+    images: []
+  });
+
+  useEffect(() => {}, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setUpLoading(true);
 
     try {
-      const update = {
+      const updates = {
+        title: formData.title,
         nick_name: user.nick_name,
-        title: title,
-        description: description,
-        content: content,
-        hash_tag: hashtag.split(' '),
-        project_start_date: projectStartDate,
-        project_end_date: projectEndDate,
-        images: [images]
+        description: formData.description,
+        content: formData.content,
+        hash_tag: formData.hashtag.split(' '),
+        project_start_date: formData.projectStartDate,
+        project_end_date: formData.projectEndDate,
+        images: formData.images
       };
 
-      const { data, error } = await supabase.from('posts').insert(update).select();
+      const { data, error } = await supabase.from('posts').insert(updates).select();
 
       if (error) throw error;
       console.log(data);
+      // navigate('/');
     } catch (error) {
       console.error('포스트 작성 실패', error.message);
     }
@@ -42,6 +51,11 @@ function WritePost() {
     └ 이름 만들기 → 업로드 → URL 가져오기 → 배열에 저장
   3. 상태 업데이트: setImages
   */
+
+  const onChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const onChangeImages = async (e) => {
     // 1. 파일 목록 : Array.from(유사배열) **유사 배열(iterable)**을 **진짜 배열(Array)**로 바꿔주는 메서드 이렇게 해야 .map(), .forEach() 등 배열 메서드 사용 가능
@@ -77,8 +91,8 @@ function WritePost() {
         uploadedUrls.push(publicUrlData);
       }
 
-      // 8. 상태 반영
-      setImages(uploadedUrls);
+      // 8. 상태 반영 : 불변성 유지 하면서 images 필드만 업데이트
+      setFormData((prev) => ({ ...prev, images: uploadedUrls }));
     } catch (err) {
       console.error('예상치 못한 에러 발생', err.message);
     }
@@ -97,10 +111,11 @@ function WritePost() {
             <input
               type="text"
               id="title"
-              value={title}
+              value={formData.title}
               name="title"
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={onChange}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              autoFocus
             />
           </fieldset>
 
@@ -111,9 +126,9 @@ function WritePost() {
             <input
               type="text"
               id="description"
-              value={description}
+              value={formData.description}
               name="description"
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={onChange}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </fieldset>
@@ -124,9 +139,9 @@ function WritePost() {
             <input
               type="text"
               id="hashtag"
-              value={hashtag}
+              value={formData.hashtag}
               name="hashtag"
-              onChange={(e) => setHashtag(e.target.value)}
+              onChange={onChange}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </fieldset>
@@ -137,9 +152,9 @@ function WritePost() {
             <textarea
               rows="10"
               id="content"
-              value={content}
+              value={formData.content}
               name="content"
-              onChange={(e) => setContent(e.target.value)}
+              onChange={onChange}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </fieldset>
@@ -151,18 +166,18 @@ function WritePost() {
               <input
                 type="date"
                 id="projectStartDate"
-                value={projectStartDate}
+                value={formData.projectStartDate}
                 name="projectStartDate"
-                onChange={(e) => setProjectStartDate(e.target.value)}
+                onChange={onChange}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <span className="p-2">~</span>
               <input
                 type="date"
                 id="projectEndDate"
-                value={projectEndDate}
+                value={formData.projectEndDate}
                 name="projectEndDate"
-                onChange={(e) => setProjectEndDate(e.target.value)}
+                onChange={onChange}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -185,7 +200,7 @@ function WritePost() {
               type="submit"
               className="inline-flex justify-center w-full px-4 py-2 font-semibold text-white rounded-md text-sm/6 bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950/"
             >
-              포스트 작성하기
+              {upLoading ? '업로드중' : '포스트 작성하기'}
             </button>
           </div>
         </form>

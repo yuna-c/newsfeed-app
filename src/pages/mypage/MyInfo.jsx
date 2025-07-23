@@ -235,25 +235,25 @@ function MyInfo() {
           <li>
             <p className="flex flex-col text-sm font-semibold text-gray-500">
               <span className="mb-1 font-medium">이름</span>
-              <span className="text-gray-700 text-medium">{formData.user_name}</span>
+              <span className="text-gray-700 text-[1.01rem]">{formData.user_name}</span>
             </p>
           </li>
           <li>
             <p className="flex flex-col text-sm font-semibold text-gray-500">
               <span className="mb-1 font-medium">닉네임</span>
-              <span className="text-gray-700 text-medium">{formData.nick_name}</span>
+              <span className="text-gray-700 text-[1.01rem]">{formData.nick_name}</span>
             </p>
           </li>
           <li>
             <p className="flex flex-col text-sm font-semibold text-gray-500">
               <span className="mb-1 font-medium">이메일</span>
-              <span className="text-gray-700 text-medium">{formData.email}</span>
+              <span className="text-gray-700 text-[1.01rem]">{formData.email}</span>
             </p>
           </li>
           <li>
             <p className="flex flex-col text-sm font-semibold text-gray-500">
               <span className="mb-1 font-medium">포트폴리오</span>
-              <Link to={formData.website_url} className="text-gray-700 text-medium">
+              <Link to={formData.website_url} className="text-gray-700 text-[1.01rem]">
                 {formData.website_url}
               </Link>
             </p>
