@@ -7,13 +7,17 @@ function WritePost() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [upLoading, setUpLoading] = useState(false);
+  const [previewUrls, setPreviewUrls] = useState([]); // 대표 이미지 설정
+  const [thumbnailIndex, setThumbnailIndex] = useState(0); // 썸네일 인덱스 설정
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     content: '',
     hashtag: '',
-    projectStartDate: '',
-    projectEndDate: '',
+    // 데이터가 들어가지 않을 때를 대비해 nullish 처리로 에러 접근 방지
+    projectStartDate: null,
+    projectEndDate: null,
+    thumbnail: 0,
     images: []
   });
 
@@ -22,6 +26,11 @@ function WritePost() {
   const onSubmit = async (e) => {
     e.preventDefault();
     setUpLoading(true);
+    // 하나만 들어가면 null 400에러로 동작을 막기 때문에 미리 유효성 처리
+    if (!formData.projectStartDate || !formData.projectEndDate) {
+      alert('프로젝트 시작일과 종료일을 모두 입력해주세요.');
+      return;
+    }
 
     try {
       const updates = {
@@ -30,16 +39,17 @@ function WritePost() {
         description: formData.description,
         content: formData.content,
         hash_tag: formData.hashtag.split(' '),
-        project_start_date: formData.projectStartDate,
-        project_end_date: formData.projectEndDate,
-        images: formData.images
+        project_start_date: formData.projectStartDate || null,
+        project_end_date: formData.projectEndDate || null,
+        images: formData.images,
+        thumb_nail: formData.images[thumbnailIndex]
       };
-
+      console.log(updates);
       const { data, error } = await supabase.from('posts').insert(updates).select();
 
       if (error) throw error;
       console.log(data);
-      // navigate('/');
+      navigate('/');
     } catch (error) {
       console.error('포스트 작성 실패', error.message);
     }
@@ -58,18 +68,21 @@ function WritePost() {
   };
 
   const onChangeImages = async (e) => {
-    // 1. 파일 목록 : Array.from(유사배열) **유사 배열(iterable)**을 **진짜 배열(Array)**로 바꿔주는 메서드 이렇게 해야 .map(), .forEach() 등 배열 메서드 사용 가능
     const files = Array.from(e.target.files);
     const uploadedUrls = [];
+    if (files.length === 0) return;
+    setUpLoading(true);
+
+    // files 배열에 있는 각 파일을 브라우저에서 보여주는 임시 이미지 URL로 바꿔주는 코드
 
     try {
-      // for in은 인덱스를 순환하기 떄문에 for...of 나 forEach를 써야함
-      for (const file of files) {
-        const ext = file.name.split('.').pop(); // 2. 확장자 추출
-        const filename = `${user.id}-${crypto.randomUUID()}.${ext}`; // 3. 업로드 경로
-        const filepath = `post/${filename}`; // 4. 업로드 경로
+      const previews = files.map((file) => URL.createObjectURL(file));
 
-        // 5. Supabase 업로드
+      for (const file of files) {
+        const ext = file.name.split('.').pop();
+        const filename = `${user.id}-${crypto.randomUUID()}.${ext}`;
+        const filepath = `post/${filename}`;
+
         const { _data, error: uploadError } = await supabase.storage.from('images').upload(filepath, file);
 
         if (uploadError) {
@@ -77,7 +90,6 @@ function WritePost() {
           return;
         }
 
-        // 6. 공개 URL 가져오기
         const { data: publicUrlData, error: publicUrlError } = await supabase.storage
           .from('images')
           .getPublicUrl(filepath);
@@ -86,13 +98,14 @@ function WritePost() {
           console.error('URl 가져오기 실패', publicUrlError.message);
           return;
         }
-
-        // 7. 배열에 저장
-        uploadedUrls.push(publicUrlData);
+        // publicUrlData : 객체 이고 브라우저에서 보여주거나 저장 하고 싶은건 publicUrl(문자열 이기 때문에) 객체 자체가 배열에 들어감
+        // 이러면 <img src={url}>에 여러 객체가 들어가기 때문에 publicUrl (공개링크) 하나만  data 에 넣어야 함
+        uploadedUrls.push(publicUrlData.publicUrl);
       }
-
-      // 8. 상태 반영 : 불변성 유지 하면서 images 필드만 업데이트
+      setPreviewUrls(previews);
       setFormData((prev) => ({ ...prev, images: uploadedUrls }));
+      setThumbnailIndex(0);
+      setUpLoading(false);
     } catch (err) {
       console.error('예상치 못한 에러 발생', err.message);
     }
@@ -102,6 +115,32 @@ function WritePost() {
     <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
       <article className="w-full space-y-6 xl:w-1/3">
         <h2 className="text-3xl font-extrabold">글쓰기</h2>
+
+        <div>
+          {previewUrls.map((url, index) => (
+            <div key={index} className="inline-block m-2">
+              <div
+                className={`border-2 rounded-md overflow-hidden ${
+                  index === thumbnailIndex ? ` border-black` : `border-transparent`
+                }`}
+              >
+                <img
+                  src={url}
+                  onClick={() => setThumbnailIndex(index)}
+                  className={`w-[100px] h-[100px] object-cover cursor-pointer`}
+                />
+              </div>
+              <div className="mt-1 text-center">
+                <button
+                  type="button"
+                  className="inline-flex justify-center w-1/2 px-2 py-1 text-xs font-semibold text-white rounded-full bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950/"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
 
         <form onSubmit={onSubmit} className="space-y-4">
           <fieldset>
@@ -166,7 +205,7 @@ function WritePost() {
               <input
                 type="date"
                 id="projectStartDate"
-                value={formData.projectStartDate}
+                value={formData.projectStartDate || ''}
                 name="projectStartDate"
                 onChange={onChange}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -175,7 +214,7 @@ function WritePost() {
               <input
                 type="date"
                 id="projectEndDate"
-                value={formData.projectEndDate}
+                value={formData.projectEndDate || ''}
                 name="projectEndDate"
                 onChange={onChange}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
