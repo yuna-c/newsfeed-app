@@ -37,57 +37,51 @@ function WritePost() {
   };
 
   /*
-  onChangeImages = async (e) => {
   1. 파일 목록 가져오기
   2. 각각의 파일을:
     └ 이름 만들기 → 업로드 → URL 가져오기 → 배열에 저장
   3. 상태 업데이트: setImages
-}
   */
 
   const onChangeImages = async (e) => {
-    const files = Array.from(e.target.files); // 1. 파일 목록
-    // Array.from(유사배열) **유사 배열(iterable)**을 **진짜 배열(Array)**로 바꿔주는 메서드 이렇게 해야 .map(), .forEach() 등 배열 메서드 사용 가능
-    console.log(e.target.files);
+    // 1. 파일 목록 : Array.from(유사배열) **유사 배열(iterable)**을 **진짜 배열(Array)**로 바꿔주는 메서드 이렇게 해야 .map(), .forEach() 등 배열 메서드 사용 가능
+    const files = Array.from(e.target.files);
     const uploadedUrls = [];
-    console.log(uploadedUrls);
 
-    for (const file of files) {
-      const ext = file.name.split('.').pop(); // 2. 확장자 추출
-      console.log(ext);
+    try {
+      // for in은 인덱스를 순환하기 떄문에 for...of 나 forEach를 써야함
+      for (const file of files) {
+        const ext = file.name.split('.').pop(); // 2. 확장자 추출
+        const filename = `${user.id}-${crypto.randomUUID()}.${ext}`; // 3. 업로드 경로
+        const filepath = `post/${filename}`; // 4. 업로드 경로
 
-      const filename = `${user.id}-${crypto.randomUUID()}.${ext}`; // 4. 업로드 경로
-      console.log(filename);
+        // 5. Supabase 업로드
+        const { _data, error: uploadError } = await supabase.storage.from('images').upload(filepath, file);
 
-      const filepath = `posts/${filename}`; // 4. 업로드 경로
-      console.log(filepath);
+        if (uploadError) {
+          console.error('이미지 업로드 실패', uploadError.message);
+          return;
+        }
 
-      // 5. Supabase 업로드
-      const { data, error: uploadError } = await supabase.storage.from('images').upload(filepath, file);
-      console.log(`data`, data);
-      console.log(uploadError);
+        // 6. 공개 URL 가져오기
+        const { data: publicUrlData, error: publicUrlError } = await supabase.storage
+          .from('images')
+          .getPublicUrl(filepath);
 
-      if (uploadError) {
-        console.error('이미지 업로드 실패', uploadError.message);
-        continue;
+        if (publicUrlError) {
+          console.error('URl 가져오기 실패', publicUrlError.message);
+          return;
+        }
+
+        // 7. 배열에 저장
+        uploadedUrls.push(publicUrlData);
       }
 
-      // 6. 공개 URL 가져오기
-      const { data: publicUrlData, error: ulrError } = supabase.storage.from('images').getPublicUrl(filepath);
-      console.log(publicUrlData, ulrError);
-
-      if (ulrError) {
-        console.error('URL 추출 실패', error.message);
-        continue;
-      }
-      // 7. 배열에 저장
-      uploadedUrls.push(publicUrlData.publicUrl);
-      console.log(uploadedUrls);
+      // 8. 상태 반영
+      setImages(uploadedUrls);
+    } catch (err) {
+      console.error('예상치 못한 에러 발생', err.message);
     }
-
-    // 8. 상태 반영
-    setImages(uploadedUrls);
-    console.log(images);
   };
 
   return (
