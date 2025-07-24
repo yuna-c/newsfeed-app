@@ -2,13 +2,18 @@ import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import { supabase } from '../../supabase/Client';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 function WritePost() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+
+  const [errors, setErrors] = useState({});
   const [upLoading, setUpLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [previewUrls, setPreviewUrls] = useState([]); // 대표 이미지 설정
   const [thumbnailIndex, setThumbnailIndex] = useState(0); // 썸네일 인덱스 설정
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,37 +26,65 @@ function WritePost() {
     images: []
   });
 
-  useEffect(() => {}, []);
+  const validateForm = () => {
+    const newError = {};
+
+    if (!formData.title) {
+      newError.title = '제목을 입력해 주세요.';
+    }
+
+    if (!formData.description) {
+      newError.description = '설명을 입력해 주세요.';
+    }
+
+    if (!formData.content) {
+      newError.content = '본문을 입력해 주세요.';
+    }
+
+    if (!formData.projectStartDate || !formData.projectEndDate) {
+      newError.projectStartDate = '프로젝트 시작일을 입력해주세요.';
+      newError.projectEndDate = '프로젝트 종료일을 입력해주세요.';
+    }
+
+    setErrors(newError);
+    return Object.keys(newError).length === 0;
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setUpLoading(true);
+    setIsSubmitted(true);
+
+    // setUpLoading(true);
     // 하나만 들어가면 null 400에러로 동작을 막기 때문에 미리 유효성 처리
-    if (!formData.projectStartDate || !formData.projectEndDate) {
-      alert('프로젝트 시작일과 종료일을 모두 입력해주세요.');
-      return;
-    }
+    // if (!formData.projectStartDate || !formData.projectEndDate) {
+    //   alert('프로젝트 시작일과 종료일을 모두 입력해주세요.');
+    //   return;
+    // }
 
-    try {
-      const updates = {
-        title: formData.title,
-        nick_name: user.nick_name,
-        description: formData.description,
-        content: formData.content,
-        hash_tag: formData.hashtag.split(' '),
-        project_start_date: formData.projectStartDate || null,
-        project_end_date: formData.projectEndDate || null,
-        images: formData.images,
-        thumb_nail: formData.images[thumbnailIndex]
-      };
-      console.log(updates);
-      const { data, error } = await supabase.from('posts').insert(updates).select();
+    if (validateForm()) {
+      try {
+        const updates = {
+          title: formData.title,
+          nick_name: user.nick_name,
+          description: formData.description,
+          content: formData.content,
+          hash_tag: formData.hashtag.split(' '),
+          project_start_date: formData.projectStartDate || null,
+          project_end_date: formData.projectEndDate || null,
+          images: formData.images,
+          thumb_nail: formData.images[thumbnailIndex]
+        };
 
-      if (error) throw error;
-      console.log(data);
-      navigate('/');
-    } catch (error) {
-      console.error('포스트 작성 실패', error.message);
+        const { _data, error } = await supabase.from('posts').insert(updates).select();
+
+        if (error) throw error;
+        toast.success('글 작성이 완료되었습니다.');
+        setTimeout(() => {
+          navigate('/');
+        }, 1000); // toast 실행 된 후 navigate 처리
+      } catch (error) {
+        console.error('포스트 작성 실패', error.message);
+      }
     }
   };
 
@@ -153,9 +186,11 @@ function WritePost() {
               value={formData.title}
               name="title"
               onChange={onChange}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${isSubmitted && errors.title ? 'border-red-500' : 'border-gray-300'}`}
               autoFocus
             />
+            {isSubmitted && errors.title && <p className="mt-1 text-sm text-red-500">{errors.title}</p>}
           </fieldset>
 
           <fieldset>
@@ -168,9 +203,12 @@ function WritePost() {
               value={formData.description}
               name="description"
               onChange={onChange}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${isSubmitted && errors.description ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {isSubmitted && errors.description && <p className="mt-1 text-sm text-red-500">{errors.description}</p>}
           </fieldset>
+
           <fieldset>
             <label htmlFor="hashtag" className="mb-1 text-sm font-medium text-gray-700">
               해시태그
@@ -181,9 +219,12 @@ function WritePost() {
               value={formData.hashtag}
               name="hashtag"
               onChange={onChange}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${isSubmitted && errors.hashtag ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {isSubmitted && errors.hashtag && <p className="mt-1 text-sm text-red-500">{errors.hashtag}</p>}
           </fieldset>
+
           <fieldset>
             <label htmlFor="content" className="mb-1 text-sm font-medium text-gray-700">
               본문
@@ -194,9 +235,12 @@ function WritePost() {
               value={formData.content}
               name="content"
               onChange={onChange}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${isSubmitted && errors.content ? 'border-red-500' : 'border-gray-300'}`}
             />
+            {isSubmitted && errors.content && <p className="mt-1 text-sm text-red-500">{errors.content}</p>}
           </fieldset>
+
           <fieldset>
             <label htmlFor="date" className="mb-1 text-sm font-medium text-gray-700">
               기간
@@ -208,7 +252,8 @@ function WritePost() {
                 value={formData.projectStartDate || ''}
                 name="projectStartDate"
                 onChange={onChange}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${isSubmitted && errors.projectStartDate ? 'border-red-500' : 'border-gray-300'}`}
               />
               <span className="p-2">~</span>
               <input
@@ -217,10 +262,15 @@ function WritePost() {
                 value={formData.projectEndDate || ''}
                 name="projectEndDate"
                 onChange={onChange}
-                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+              ${isSubmitted && errors.projectEndDate ? 'border-red-500' : 'border-gray-300'}`}
               />
             </div>
+            {isSubmitted && errors.projectStartDate && (
+              <p className="mt-1 text-sm text-red-500">{errors.projectStartDate}</p>
+            )}
           </fieldset>
+
           <fieldset>
             <label htmlFor="file" className="mb-1 text-sm font-medium text-gray-700">
               파일선택
@@ -228,9 +278,9 @@ function WritePost() {
             <input
               type="file"
               accept="image/*"
-              multiple
               onChange={onChangeImages}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              multiple
+              className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
             />
           </fieldset>
 
