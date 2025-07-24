@@ -3,6 +3,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { supabase } from '../../supabase/Client';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { getMultipleImageURL } from '../../utils/getUrls';
 
 function WritePost() {
   const navigate = useNavigate();
@@ -54,16 +55,10 @@ function WritePost() {
     e.preventDefault();
     setIsSubmitted(true);
 
-    // setUpLoading(true);
-    // 하나만 들어가면 null 400에러로 동작을 막기 때문에 미리 유효성 처리
-    // if (!formData.projectStartDate || !formData.projectEndDate) {
-    //   alert('프로젝트 시작일과 종료일을 모두 입력해주세요.');
-    //   return;
-    // }
-
     if (validateForm()) {
       try {
         const updates = {
+          user_id: user.id,
           title: formData.title,
           nick_name: user.nick_name,
           description: formData.description,
@@ -74,26 +69,19 @@ function WritePost() {
           images: formData.images,
           thumb_nail: formData.images[thumbnailIndex]
         };
-
+        console.log(updates);
         const { _data, error } = await supabase.from('posts').insert(updates).select();
 
         if (error) throw error;
         toast.success('글 작성이 완료되었습니다.');
-        setTimeout(() => {
-          navigate('/');
-        }, 1000); // toast 실행 된 후 navigate 처리
+        // setTimeout(() => {
+        //   navigate('/');
+        // }, 1000); // toast 실행 된 후 navigate 처리
       } catch (error) {
         console.error('포스트 작성 실패', error.message);
       }
     }
   };
-
-  /*
-  1. 파일 목록 가져오기
-  2. 각각의 파일을:
-    └ 이름 만들기 → 업로드 → URL 가져오기 → 배열에 저장
-  3. 상태 업데이트: setImages
-  */
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -102,45 +90,22 @@ function WritePost() {
 
   const onChangeImages = async (e) => {
     const files = Array.from(e.target.files);
-    const uploadedUrls = [];
     if (files.length === 0) return;
     setUpLoading(true);
 
-    // files 배열에 있는 각 파일을 브라우저에서 보여주는 임시 이미지 URL로 바꿔주는 코드
-
     try {
       const previews = files.map((file) => URL.createObjectURL(file));
-
-      for (const file of files) {
-        const ext = file.name.split('.').pop();
-        const filename = `${user.id}-${crypto.randomUUID()}.${ext}`;
-        const filepath = `post/${filename}`;
-
-        const { _data, error: uploadError } = await supabase.storage.from('images').upload(filepath, file);
-
-        if (uploadError) {
-          console.error('이미지 업로드 실패', uploadError.message);
-          return;
-        }
-
-        const { data: publicUrlData, error: publicUrlError } = await supabase.storage
-          .from('images')
-          .getPublicUrl(filepath);
-
-        if (publicUrlError) {
-          console.error('URl 가져오기 실패', publicUrlError.message);
-          return;
-        }
-        // publicUrlData : 객체 이고 브라우저에서 보여주거나 저장 하고 싶은건 publicUrl(문자열 이기 때문에) 객체 자체가 배열에 들어감
-        // 이러면 <img src={url}>에 여러 객체가 들어가기 때문에 publicUrl (공개링크) 하나만  data 에 넣어야 함
-        uploadedUrls.push(publicUrlData.publicUrl);
-      }
+      // hook으로 이미지 업로드, URL 가져오는 로직 분리
+      // for...of를 map으로 변경
+      const urls = await getMultipleImageURL(files, 'images', 'posts', user.id);
       setPreviewUrls(previews);
-      setFormData((prev) => ({ ...prev, images: uploadedUrls }));
+      setFormData((prev) => ({ ...prev, images: urls }));
       setThumbnailIndex(0);
       setUpLoading(false);
     } catch (err) {
       console.error('예상치 못한 에러 발생', err.message);
+    } finally {
+      setUpLoading(false);
     }
   };
 
