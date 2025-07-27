@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { supabase } from '../supabase/Client';
 import { FaHeart } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 function Home() {
+  const { user } = useContext(AuthContext);
   const [posts, setPosts] = useState([]);
+  const [likedPosts, setLikedPosts] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -26,6 +30,54 @@ function Home() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchLikes = async () => {
+      try {
+        const { data, error } = await supabase.from('likes').select('post_id').eq('user_id', user.id);
+
+        if (error) throw error;
+        setLikedPosts(data.map((like) => like.post_id));
+        console.log(data.map((like) => like.post_id));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchLikes();
+  }, [user]);
+
+  const onToggle = async (postId) => {
+    if (!user) return;
+    const alreadyLikes = likedPosts.includes(postId);
+
+    try {
+      // 좋아요 취소
+      if (alreadyLikes) {
+        const { _data, error } = await supabase.from('likes').delete().eq('post_id', postId).eq('user_id', user.id);
+
+        if (error) throw error;
+        setLikedPosts((prev) => prev.filter((id) => id !== postId));
+      } else {
+        // 좋아요
+        const likePost = {
+          user_id: user.id,
+          post_id: postId // onToggle(postId)에서 받은 값 그대로 사용!
+          // likedPosts는 배열이기 때문에 likedPosts.postId를 넣으면 undefined가 나온다
+        };
+
+        const { _data, error } = await supabase.from('likes').insert([likePost]);
+
+        if (error) throw error;
+        setLikedPosts((prev) => [...prev, postId]);
+      }
+
+      toast.dismiss();
+      toast.success(alreadyLikes ? '좋아요 취소' : '좋아요');
+    } catch (error) {
+      console.error('좋아요 실패', error.message);
+    }
+  };
+
   return (
     <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
       <article>
@@ -36,7 +88,12 @@ function Home() {
                 key={post.id}
                 className="relative space-y-3 overflow-hidden border rounded-sm shadow-sm cursor-pointer xl:w-72"
               >
-                <FaHeart className={`absolute w-5 h-5 top-2 right-2 z-10`} />
+                <FaHeart
+                  className={`absolute w-5 h-5 top-2 right-2 z-10 
+                    ${likedPosts.includes(post.id) ? 'text-red-700' : 'text-black'}
+                `}
+                  onClick={() => onToggle(post.id)}
+                />
 
                 <Link to={`detailpost/${post.id}`}>
                   {/* 썸네일 */}
