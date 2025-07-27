@@ -20,6 +20,7 @@ function WritePost() {
     description: '',
     content: '',
     hashtag: '',
+    updated_at: '',
     // 데이터가 들어가지 않을 때를 대비해 nullish 처리로 에러 접근 방지
     projectStartDate: null,
     projectEndDate: null,
@@ -67,16 +68,17 @@ function WritePost() {
           project_start_date: formData.projectStartDate || null,
           project_end_date: formData.projectEndDate || null,
           images: formData.images,
-          thumb_nail: formData.images[thumbnailIndex]
+          thumb_nail: formData.images[thumbnailIndex],
+          updated_at: new Date().toISOString()
         };
         console.log(updates);
         const { _data, error } = await supabase.from('posts').insert(updates).select();
 
         if (error) throw error;
         toast.success('글 작성이 완료되었습니다.');
-        // setTimeout(() => {
-        //   navigate('/');
-        // }, 1000); // toast 실행 된 후 navigate 처리
+        setTimeout(() => {
+          navigate('/');
+        }, 1000); // toast 실행 된 후 navigate 처리
       } catch (error) {
         console.error('포스트 작성 실패', error.message);
       }

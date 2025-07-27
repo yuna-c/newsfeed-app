@@ -123,6 +123,7 @@ function MyInfo() {
         await fetchUserData();
 
         setIsModalOpen(false);
+        toast.dismiss();
         toast.success('수정이 완료되었습니다.');
       } catch (err) {
         console.error('수정 중 오류 발생:', err.message);
