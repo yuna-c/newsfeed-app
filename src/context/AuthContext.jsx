@@ -40,8 +40,8 @@ export const AuthProvider = ({ children }) => {
           // console.log('✅ [getProfiles] 프로필 로드 완료:', userData);
           setUser(userData);
         }
-      } catch (err) {
-        console.error('🔥 [getProfiles] 예외 발생:', err.message);
+      } catch (error) {
+        console.error('🔥 [getProfiles] 예외 발생:', error.message);
         setUser(null);
       } finally {
         setLoading(false);
@@ -73,8 +73,8 @@ export const AuthProvider = ({ children }) => {
           await getProfiles(session.user);
         }
         setLoading(false);
-      } catch (err) {
-        console.warn('🔥 [getSession] 예외 발생:', err.message);
+      } catch (error) {
+        console.warn('🔥 [getSession] 예외 발생:', error.message);
         setUser(null);
       } finally {
         setLoading(false);

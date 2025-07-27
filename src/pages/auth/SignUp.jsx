@@ -79,8 +79,8 @@ function SignUp() {
         toast.success('가입을 축하합니다.');
         // 회원가입 성공 후 navigate()로 전달된 추가 state 데이터 { fromSignUp: true } 전달
         navigate('/signin', { state: { fromSignUp: true } });
-      } catch (err) {
-        console.error('회원가입 오류:', err.message);
+      } catch (error) {
+        console.error('회원가입 오류:', error.message);
       }
     }
   };

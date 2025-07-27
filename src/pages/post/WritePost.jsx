@@ -104,8 +104,8 @@ function WritePost() {
       setFormData((prev) => ({ ...prev, images: urls }));
       setThumbnailIndex(0);
       setUpLoading(false);
-    } catch (err) {
-      console.error('예상치 못한 에러 발생', err.message);
+    } catch (error) {
+      console.error('예상치 못한 에러 발생', error.message);
     } finally {
       setUpLoading(false);
     }

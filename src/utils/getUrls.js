@@ -51,8 +51,8 @@ export const getImageURL = async (file, bucket = 'images', folder = 'public', ol
     }
 
     return data.publicUrl;
-  } catch (e) {
-    console.error('[이미지 업로드 오류]', e.message);
+  } catch (error) {
+    console.error('[이미지 업로드 오류]', error.message);
     return null;
   }
 };
@@ -99,8 +99,8 @@ export const getMultipleImageURL = async (files, bucket = 'images', folder = 'pu
 
     const uploadedUrls = await Promise.all(upload);
     return uploadedUrls.filter(Boolean); // 실패한 파일은 제거
-  } catch (err) {
-    console.error('[여러 이미지 업로드 중 오류 발생]', err.message);
+  } catch (error) {
+    console.error('[여러 이미지 업로드 중 오류 발생]', error.message);
     return [];
   }
 };

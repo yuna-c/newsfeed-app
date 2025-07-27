@@ -37,7 +37,6 @@ function Home() {
 
         if (error) throw error;
         setLikedPosts(data.map((like) => like.post_id));
-        console.log(data.map((like) => like.post_id));
       } catch (error) {
         console.error(error);
       }

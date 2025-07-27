@@ -76,8 +76,8 @@ function MyInfo() {
       if (error) throw error;
 
       setFormData(data);
-    } catch (err) {
-      console.error(`데이터 가져오는 중 에러 발생: ${err.message}`);
+    } catch (error) {
+      console.error(`데이터 가져오는 중 에러 발생: ${error.message}`);
     }
   };
 
@@ -125,10 +125,10 @@ function MyInfo() {
         setIsModalOpen(false);
         toast.dismiss();
         toast.success('수정이 완료되었습니다.');
-      } catch (err) {
-        console.error('수정 중 오류 발생:', err.message);
+      } catch (error) {
+        console.error('수정 중 오류 발생:', error.message);
         toast.error(`비밀번호 수정 중 오류가 발생하였습니다. 
-        ${err.message}`);
+        ${error.message}`);
       }
     }
   };
@@ -168,8 +168,8 @@ function MyInfo() {
 
         setUpLoading(false);
       }
-    } catch (err) {
-      console.error(`이미지 업로드 오류: ${err.message}`);
+    } catch (error) {
+      console.error(`이미지 업로드 오류: ${error.message}`);
       toast.error('이미지 업로드 중 오류가 발생하였습니다.');
     }
   };
