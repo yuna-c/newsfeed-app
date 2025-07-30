@@ -117,16 +117,16 @@ function WritePost() {
         <h2 className="text-3xl font-extrabold">글쓰기</h2>
 
         <div>
-          {previewUrls.map((url, index) => (
-            <div key={index} className="inline-block m-2">
+          {previewUrls.map((url, idx) => (
+            <div key={idx} className="inline-block m-2">
               <div
                 className={`border-2 rounded-md overflow-hidden ${
-                  index === thumbnailIndex ? ` border-black` : `border-transparent`
+                  idx === thumbnailIndex ? ` border-black` : `border-transparent`
                 }`}
               >
                 <img
                   src={url}
-                  onClick={() => setThumbnailIndex(index)}
+                  onClick={() => setThumbnailIndex(idx)}
                   className={`w-[100px] h-[100px] object-cover cursor-pointer`}
                 />
               </div>

@@ -2,11 +2,14 @@ import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from './../../context/AuthContext';
 import { supabase } from '../../supabase/Client';
+import toast from 'react-hot-toast';
 
 function DetailPost() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [post, setPost] = useState([]);
+  const myPost = user.id === post.user_id;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -23,8 +26,22 @@ function DetailPost() {
     fetchData();
   }, [id]);
 
-  const onDelete = async () => {};
-  const onEdit = async () => {};
+  const onDelete = async () => {
+    const configDelete = window.confirm('글을 삭제하시겠습니까?');
+    if (!configDelete) return;
+
+    try {
+      const { _data, error } = await supabase.from('posts').delete().eq('id', id);
+      if (error) throw error;
+      toast.success('삭제가 완료되었습니다.');
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
+    } catch (error) {
+      console.error(`게시글 삭제 실패`, error.message);
+    }
+  };
+
   return (
     <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
       <article className="w-full space-y-6 xl:w-1/3">
@@ -46,8 +63,10 @@ function DetailPost() {
           </li>
 
           <li className="flex flex-row w-full overflow-x-scroll border border-red-700">
-            {post?.images?.map((image, index) => (
-              <img key={index} src={image} alt={image + index} />
+            {post?.images?.map((image, idx) => (
+              <div key={idx}>
+                <img src={image} alt={image + idx} />
+              </div>
             ))}
           </li>
           <li className="flex justify-end text-sm font-semibold text-gray-700 ">
@@ -66,17 +85,23 @@ function DetailPost() {
           </li>
         </ul>
         <div>댓글</div>
-        <div className="flex w-full gap-2">
-          <Link
-            to={`/editpost/${id}`}
-            className="inline-flex justify-center w-1/2 px-4 py-2 font-semibold text-white rounded-md text-sm/6 bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950"
-          >
-            <button>수정</button>
-          </Link>
-          <button className="inline-flex justify-center w-1/2 px-4 py-2 font-semibold text-white rounded-md text-sm/6 bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950">
-            삭제
-          </button>
-        </div>
+        {myPost && (
+          <div className="flex w-full gap-2">
+            <Link
+              to={`/editpost/${id}`}
+              className="inline-flex justify-center w-1/2 px-4 py-2 font-semibold text-white rounded-md text-sm/6 bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950"
+            >
+              <button type="button">수정</button>
+            </Link>
+            <button
+              type="button"
+              onClick={() => onDelete()}
+              className="inline-flex justify-center w-1/2 px-4 py-2 font-semibold text-white rounded-md text-sm/6 bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950"
+            >
+              삭제
+            </button>
+          </div>
+        )}
       </article>
     </section>
   );
