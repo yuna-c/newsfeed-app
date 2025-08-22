@@ -111,6 +111,43 @@ function WritePost() {
     }
   };
 
+  const onDeleteImages = async (idx) => {
+    try {
+      const deleteUrl = formData.images[idx];
+
+      // 1. supabase 스토리지 파일 삭제
+      const path = deleteUrl.split('/').slice(-1)[0];
+      console.log(path);
+      const { error } = await supabase.storage.from('images').remove([`posts/${user.id}/${path}`]);
+
+      if (error) throw error;
+
+      // 2. 상태에서 이미와 프리뷰 제거
+      const updatedImages = formData.images.filter((_, i) => i !== idx);
+      const updatedPreviews = previewUrls.filter((_, i) => i !== idx);
+
+      setFormData((prev) => ({
+        ...prev,
+        images: updatedImages
+      }));
+      setPreviewUrls(updatedPreviews);
+
+      // 썸네일 인덱스도 재조정
+      if (thumbnailIndex === idx) {
+        setThumbnailIndex(0);
+      } else if (thumbnailIndex > idx) {
+        setThumbnailIndex((prev) => prev - 1);
+      }
+
+      toast.dismiss();
+      toast.success('이미지 삭제 완료');
+    } catch (error) {
+      console.error('이미지 삭제 실패', error.message);
+      toast.dismiss();
+      toast.error('이미지 삭제중 문제가 발생하였습니다');
+    }
+  };
+
   return (
     <section className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
       <article className="w-full space-y-6 xl:w-1/3">
@@ -134,6 +171,7 @@ function WritePost() {
                 <button
                   type="button"
                   className="inline-flex justify-center w-1/2 px-2 py-1 text-xs font-semibold text-white rounded-full bg-gray-950 hover:bg-gray-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-950/"
+                  onClick={() => onDeleteImages(idx)}
                 >
                   삭제
                 </button>
